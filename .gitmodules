@@ -1,6 +1,6 @@
 [submodule "bunnies"]
 	path = bunnies
 	url = git@github.com:rieseberglab/bunnies.git
-[submodule "samples"]
-	path = samples
+[submodule "sample-info"]
+	path = sample-info
 	url = git@github.com:rieseberglab/sample-info.git
