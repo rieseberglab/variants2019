@@ -1,0 +1,2 @@
+
+KIND_PREFIX = "variants."
