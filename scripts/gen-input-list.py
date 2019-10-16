@@ -16,27 +16,36 @@ topdir = os.path.dirname(__file__) + "/.."
 nanuq_hashes_file = os.path.join(topdir, "checksums", "nanuq-hashes.txt")
 sra_hashes_file = os.path.join(topdir, "checksums", "sra-hashes.txt")
 
+
 def nanuq_hash_db():
+    def _extract_prj(url):
+        prj = os.path.basename(os.path.split(url)[0])
+        int(prj) # sanitize
+        return prj
+
     with open(nanuq_hashes_file, "r") as hashes_fd:
         hashes = {}
         for line in hashes_fd:
             line = line.strip()
             if not line or line.startswith("#"): continue
             toks = line.split()
-            proj, url = toks[0:2]
+            url, digest = toks[0:2]
             basename = os.path.basename(url)
             if basename in hashes:
                 raise Exception("duplicate filename %s" % (basename,))
+
+            proj = _extract_prj(url)
 
             hashes[basename] = {
                 'project': proj,
                 'url': url,
                 'digests': {}
             }
-            for i in range(2, len(toks), 2):
-                algo, digest = toks[i], toks[i+1]
+            for i in range(1, len(toks), 2):
+                algo, digest = toks[i].split(":")
                 hashes[basename]['digests'][algo] = digest
         return hashes
+
 
 def sra_hash_db():
     hashes = {}
@@ -118,6 +127,7 @@ def main():
                 continue
 
             if args.extend:
+                toks[5] = sra_hashes[key]['url']
                 toks += [algo + ":" + digest for algo, digest in sra_hashes[key]['digests'].items()]
                 outfd.write("\t".join(toks) + "\n")
             else:
@@ -137,6 +147,7 @@ def main():
                 continue
 
             if args.extend:
+                toks[5] = nanuq_hashes[key]['url']
                 toks += [algo + ":" + digest for algo, digest in nanuq_hashes[key]['digests'].items()]
                 outfd.write("\t".join(toks) + "\n")
             else:
