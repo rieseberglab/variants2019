@@ -35,16 +35,16 @@ def sources_db():
             item = {
                 'samplename': samplename,
                 'runid': src_run,
-                'r1_url': None,
-                'r2_url': None,
-                'digests': {}
+                'r1': None,
+                'r2': None,
             }
 
+            digests = {}
             for tag in extra:
                 if ":" not in tag:
                     continue
                 algo, digest = tag.split(":", maxsplit=1)
-                item['digests'][algo] = digest
+                digests[algo] = digest
 
             runs = by_sample.setdefault(samplename, OrderedDict())
 
@@ -53,17 +53,17 @@ def sources_db():
 
             run = runs[src_run]
             if src_url.endswith("_R1.fastq.gz"):
-                if run['r1_url']:
+                if run['r1']:
                     raise Exception("duplicate %s run %s R1" % (samplename, src_run))
-                run['r1_url'] = src_url
+                run['r1'] = (src_url, digests)
             elif src_url.endswith("_R2.fastq.gz"):
-                if run['r2_url']:
+                if run['r2']:
                     raise Exception("duplicate %s run %s R2" % (samplename, src_run))
-                run['r2_url'] = src_url
+                run['r2'] = (src_url, digests)
             elif src_url.endswith(".sra"):
-                if run['r1_url'] or run['r2_url']:
+                if run['r1'] or run['r2']:
                     raise Exception("duplicate %s run %s sra" % (samplename, src_run))
-                run['r1_url'] = src_url
+                run['r1'] = (src_url, digests)
             else:
                 raise Exception("unrecognized url " + src_url)
 
@@ -98,10 +98,9 @@ def main():
             entry = {
                 'sample_name': samplename,
                 'species': rest[0],
-                'run': runid,
-                'r1_url': run['r1_url'],
-                'r2_url': run['r2_url'],
-                'md5': run['digests']['md5']
+                'runid': runid,
+                'r1': run['r1'],
+                'r2': run['r2']
             }
             outfd.write(json.dumps(entry, sort_keys=True)+"\n")
 
