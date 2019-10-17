@@ -1,8 +1,8 @@
 import bunnies
 import bunnies.unmarshall
 import logging
-
-from .constants import KIND_PREFIX
+import bunnies.config as config
+from .constants import KIND_PREFIX, SAMPLE_NAME_RE
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +34,10 @@ class Align(bunnies.Transform):
 
         if None in (sample_name, r1, ref, ref_idx):
             raise Exception("invalid parameters for alignment")
+
+        if not SAMPLE_NAME_RE.match(sample_name):
+            raise ValueError("sample name %r does not match %s" % (
+                sample_name, SAMPLE_NAME_RE.pattern))
 
         self.sample_name = sample_name
         self.r1 = r1
@@ -67,6 +71,16 @@ class Align(bunnies.Transform):
             'vcpus': 4,
             'memory': 12000,
             'timeout': 4*3600
+        }
+
+    def output_prefix(self, bucket=None):
+        bucket = bucket or config['storage']['build_bucket']
+        return "s3://%(bucket)s/%(name)s-%(version)s-%(sample_name)-%(cid)s/" % {
+            'name': self.name,
+            'bucket': bucket,
+            'version': self.version,
+            'sample_name': self.params['sample_name'],
+            'cid': self.canonical_id
         }
 
     def run(self, **params):

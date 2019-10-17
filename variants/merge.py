@@ -2,7 +2,7 @@ import bunnies
 import bunnies.unmarshall
 import logging
 
-from .constants import KIND_PREFIX
+from .constants import KIND_PREFIX, SAMPLE_NAME_RE
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +27,10 @@ class Merge(bunnies.Transform):
             aligned_bams = []
             for i in range(0, params.get('num_bams')):
                 aligned_bams.append(inputs.get(str(i)).node)
+
+        if not SAMPLE_NAME_RE.match(sample_name):
+            raise ValueError("sample name %r does not match %s" % (
+                sample_name, SAMPLE_NAME_RE.pattern))
 
         self.sample_name = sample_name
         self.params["sample_name"] = sample_name
