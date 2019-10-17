@@ -37,9 +37,16 @@ class Merge(bunnies.Transform):
         if not sample_name:
             raise ValueError("you must specify the sample name to write")
 
+        # fixme verify that all bams have the same reference
         for i, bam in enumerate(aligned_bams):
             # print(self.sample_name, bam)
             self.add_input(str(i), bam, desc="aligned input #%d" % (i,))
+
+    def get_reference(self):
+        if not self.inputs:
+            return None
+        bam0 = self.inputs["0"].node
+        return bam0.ref
 
     @classmethod
     def task_template(cls, compute_env):

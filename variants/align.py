@@ -24,7 +24,8 @@ class Align(bunnies.Transform):
         if manifest is not None:
             inputs, params = manifest['inputs'], manifest['params']
             r1 = inputs['r1'].node
-            r2 = inputs['r2'].node
+            # R2 is optional for SRAs
+            r2 = inputs['r2'].node if 'r2' in inputs else None
             ref = inputs['ref'].node
             ref_idx = inputs['ref_idx'].node
 
@@ -40,8 +41,10 @@ class Align(bunnies.Transform):
         self.ref = ref
         self.ref_idx = ref_idx
 
-        self.add_input("r1", r1,    desc="fastq forward reads")
-        self.add_input("r2", r2,    desc="fastq reverse reads")
+        self.add_input("r1", r1,    desc="forward reads")
+        if r2:
+            self.add_input("r2", r2,    desc="reverse reads")
+
         self.add_input("ref", ref,  desc="reference fasta")
         self.add_input("ref_idx", ref_idx, desc="reference index")
         self.params["lossy"] = bool(lossy)
@@ -103,7 +106,7 @@ class Align(bunnies.Transform):
             align_args.append("-lossy")
 
         r1_target = self.r1.ls()
-        r2_target = self.r2.ls()
+        r2_target = self.r2.ls() if self.r2 else None
 
         # write jobfile
         jobfile_doc = {
@@ -111,7 +114,7 @@ class Align(bunnies.Transform):
                 "name": self.params['sample_name'],
                 "locations": [
                     [r1_target['url'], "md5:" + r1_target['digests']['md5']],
-                    [r2_target['url'], "md5:" + r2_target['digests']['md5']]
+                    [r2_target['url'], "md5:" + r2_target['digests']['md5']] if r2_target else ["", ""]
                 ]
             }
         }
