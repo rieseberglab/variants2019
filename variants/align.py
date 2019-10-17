@@ -75,7 +75,7 @@ class Align(bunnies.Transform):
 
     def output_prefix(self, bucket=None):
         bucket = bucket or config['storage']['build_bucket']
-        return "s3://%(bucket)s/%(name)s-%(version)s-%(sample_name)-%(cid)s/" % {
+        return "s3://%(bucket)s/%(name)s.%(version)s-%(sample_name)s-%(cid)s/" % {
             'name': self.name,
             'bucket': bucket,
             'version': self.version,

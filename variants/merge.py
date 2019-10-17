@@ -1,6 +1,7 @@
 import bunnies
 import bunnies.unmarshall
 import logging
+import bunnies.config as config
 
 from .constants import KIND_PREFIX, SAMPLE_NAME_RE
 
@@ -144,5 +145,15 @@ class Merge(bunnies.Transform):
         }
         return output
 
+
+    def output_prefix(self, bucket=None):
+        bucket = bucket or config['storage']['build_bucket']
+        return "s3://%(bucket)s/%(name)s.%(version)s-%(sample_name)s-%(cid)s/" % {
+            'name': self.name,
+            'bucket': bucket,
+            'version': self.version,
+            'sample_name': self.params['sample_name'],
+            'cid': self.canonical_id
+        }
 
 bunnies.unmarshall.register_kind(Merge)
