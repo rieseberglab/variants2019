@@ -27,6 +27,6 @@ def InputFile(url, desc="", digests=None):
     Factory method to wrap various file URL forms into a Bunnies file
     """
     if url.startswith("s3://"):
-        return bunnies.S3Blob(url, desc=desc)
+        return bunnies.S3Blob(url, desc=desc, digests=digests)
     else:
         return bunnies.ExternalFile(url, desc=desc, digests=digests)
