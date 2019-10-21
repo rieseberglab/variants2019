@@ -83,7 +83,7 @@ class Align(bunnies.Transform):
             'cid': self.canonical_id
         }
 
-    def run(self, **params):
+    def run(self, resources=None, **params):
         """ this runs in the image """
         import os
         import sys
@@ -137,7 +137,7 @@ class Align(bunnies.Transform):
                                          prefix=self.params['sample_name'], dir=workdir, delete=False) as jobfile_fd:
             json.dump(jobfile_doc, jobfile_fd)
 
-        # num_threads = params['resources']['vcpus']
+        num_threads = int(resources['vcpus'], 10)
         align_args += [
             "-r", ref_path,
             "-i", jobfile_fd.name,
@@ -145,6 +145,7 @@ class Align(bunnies.Transform):
             "-w", workdir,
             "-m",       # autodetect readgroup info
             "-d", "1",  # mark duplicates
+            "-n", num_threads,
             "-stats"
         ]
 
