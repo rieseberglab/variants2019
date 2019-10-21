@@ -94,6 +94,7 @@ def main():
             species=obj['species'],
             runid=obj['runid']
         ))
+    log.info("processing %d sequencing runs...", len(runs))
 
     targets = []
     references = {

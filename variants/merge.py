@@ -13,7 +13,7 @@ class Merge(bunnies.Transform):
     merge one or more bam files and modify the readgroup with the
     provided information. bams are merged in the order provided.
     """
-    MERGE_IMAGE = "rieseberglab/analytics:7-2.5.7"
+    MERGE_IMAGE = "rieseberglab/analytics:7-2.5.8"
     VERSION = "1"
 
     __slots__ = ("sample_name",)

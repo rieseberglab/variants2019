@@ -11,7 +11,7 @@ class Align(bunnies.Transform):
     """
     Align a paired-end fastq or sra file against a reference genome
     """
-    ALIGN_IMAGE = "rieseberglab/analytics:7-2.5.7"
+    ALIGN_IMAGE = "rieseberglab/analytics:7-2.5.8"
     VERSION = "1"
 
     __slots__ = ("sample_name", "r1", "r2", "ref", "ref_idx")
