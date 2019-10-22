@@ -145,7 +145,7 @@ class Align(bunnies.Transform):
             "-w", workdir,
             "-m",       # autodetect readgroup info
             "-d", "1",  # mark duplicates
-            "-n", num_threads,
+            "-n", str(num_threads),
             "-stats"
         ]
 
