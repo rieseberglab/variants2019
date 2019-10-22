@@ -63,7 +63,7 @@ get_reference.cache = {}
 
 def main():
     setup_logging(logging.INFO)
-    bunnies.setup_logging(logging.INFO)
+    bunnies.setup_logging(logging.DEBUG)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
@@ -103,6 +103,7 @@ def main():
     }
 
     all_merges = []
+    all_bams = []
     for refname, ref in references.items():
         by_name = {}
         for run in runs:
@@ -112,6 +113,7 @@ def main():
                         ref=ref.ref,
                         ref_idx=ref.ref_idx,
                         lossy=False)
+            all_bams.append(bam)
             by_name.setdefault(run.sample_name, []).append(bam)
         for sample_name in by_name:
             sample_bams = by_name[sample_name]
@@ -122,14 +124,14 @@ def main():
     # - fixates software versions and parameters
     # - creates graph of dependencies
     log.info("building pipeline...")
-    pipeline = bunnies.build_pipeline(all_merges)
+    pipeline = bunnies.build_pipeline(all_bams)
     log.info("pipeline built...")
 
     #
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(os.path.basename("variants"))
+    pipeline.build(os.path.basename("variants2"))
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
