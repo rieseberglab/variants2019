@@ -137,7 +137,7 @@ class Align(bunnies.Transform):
                                          prefix=self.params['sample_name'], dir=workdir, delete=False) as jobfile_fd:
             json.dump(jobfile_doc, jobfile_fd)
 
-        num_threads = int(resources['vcpus'], 10)
+        num_threads = resources['vcpus']
         align_args += [
             "-r", ref_path,
             "-i", jobfile_fd.name,
