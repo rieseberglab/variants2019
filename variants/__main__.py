@@ -124,7 +124,7 @@ def main():
     # - fixates software versions and parameters
     # - creates graph of dependencies
     log.info("building pipeline...")
-    pipeline = bunnies.build_pipeline(all_bams)
+    pipeline = bunnies.build_pipeline(all_merges)
     log.info("pipeline built...")
 
     #
