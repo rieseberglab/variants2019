@@ -131,7 +131,7 @@ def main():
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(os.path.basename("variants2"))
+    pipeline.build(os.path.basename("variants3"))
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
