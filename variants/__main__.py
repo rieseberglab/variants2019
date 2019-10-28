@@ -63,7 +63,7 @@ get_reference.cache = {}
 
 def main():
     setup_logging(logging.INFO)
-    bunnies.setup_logging(logging.DEBUG)
+    bunnies.setup_logging(logging.INFO)
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
@@ -126,6 +126,10 @@ def main():
     log.info("building pipeline...")
     pipeline = bunnies.build_pipeline(all_merges)
     log.info("pipeline built...")
+
+    #for build_node in pipeline.build_order():
+    #    print(build_node.data, build_node.data.output_prefix())
+    #return 0
 
     #
     # Create compute resources, tag the compute environment
