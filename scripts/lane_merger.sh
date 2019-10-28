@@ -22,17 +22,22 @@ function usage () {
     --delete-old   delete input bam files after a merge is successful
                    (default is to keep them)
 
-    --samplename NAME name to use in the manifest and headers
+    --samplename   NAME name to use in the manifest and headers
 
     --samtools SAMTOOLSBIN  path to samtools binary
     --sambamba SAMBIN  path to sambamba binary
     --picard   PICARDBIN path to picard jar file (gatk)
+
+    --threads N    Number of threads
+    --maxheap M    Max heap size for java, in megabytes
+
 "
 }
-
+num_threads=${num_threads:-8}
 sambamba_cmd=${sambamba_cmd:-/usr/local/bin/sambamba_v0.6.6}
 samtools_cmd=${samtools_cmd:-/usr/bin/samtools}
 picard_bin=${picard_bin:-/gatk/gatk.jar}
+max_heap_mb=""
 
 # all files merged so far
 #
@@ -50,30 +55,6 @@ tmp_bam_dir="scratch/tmp"
 DRY_RUN=0
 DELETE_OLD=0
 TARGET_SAMPLE=""
-
-#https://stackoverflow.com/questions/3963716/how-to-manually-expand-a-special-variable-ex-tilde-in-bash/27485157#27485157
-function expand_home ()
-{
-    # ~foo/y => /home/foo/
-    # ~/y    => /home/foo
-    # blah   => blah
-    (
-	set +x
-	local arg content content_quoted
-	while read arg; do
-	    case "$arg" in
-		~*)
-		    printf -v content_quoted "%q" "${arg:1}"
-		    eval "content=~${content_quoted}"
-		    printf '%s\n' "$content"
-		    ;;
-		*)
-		    printf "%s\n" "$arg"
-		    ;;
-	    esac
-	done
-    )
-}
 
 function update_read_groups ()
 {
@@ -132,6 +113,14 @@ while [[ "$#" -gt 0 ]]; do
 	    ;;
 	--tmpdir)
 	    tmp_bam_dir="$1"
+	    shift;
+	    ;;
+	--threads)
+	    num_threads="$1"
+	    shift;
+	    ;;
+	--maxheap)
+	    max_heap_mb="$1"
 	    shift;
 	    ;;
 	-*)
@@ -228,8 +217,16 @@ function markdup ()
     local infile="$1"
     local outfile="$2"
     local tmpdir="$3"
+    local java_opts=( -DGATK_STACKTRACE_ON_USER_EXCEPTION=true )
 
-    java -jar "${picard_bin}" MarkDuplicates \
+    if [[ -n "${max_heap_mb}" ]]; then
+	java_opts+=("-Xmx${max_heap_mb}m")
+    fi
+
+    # sambamba markdup doesn't work on Ha412 because reference has too
+    # many contigs.
+
+    java "${java_opts[@]}" -jar "${picard_bin}" MarkDuplicates \
 	 -I="$infile" \
 	 -O="$outfile" \
 	 -M="${outfile%%.bam}.dupmetrics.txt" \
@@ -243,7 +240,7 @@ function markdup ()
 if [[ "${#target_bam[@]}" -gt 1 ]]; then
     (
 	set -x
-	${sambamba_cmd} merge   -t 8 "${work_dir}/__merged__.bam" "${target_bam[@]}"
+	${sambamba_cmd} merge   -t "${num_threads}" "${work_dir}/__merged__.bam" "${target_bam[@]}"
 	markdup "${work_dir}/__merged__.bam" "${work_dir}/${final_name}" "${work_dir}"
 	cat "${work_dir}/${final_name}".md5
 	update_read_groups "${TARGET_SAMPLE}" "${work_dir}/${final_name}"
@@ -255,13 +252,13 @@ if [[ "${#target_bam[@]}" -gt 1 ]]; then
 
     echo "Checking new bam to see if read sums match"
     #Now count reads to make sure it matches up.
-    new_sum=$($sambamba_cmd view -t 8 -c "${work_dir}/${final_name}")
+    new_sum=$($sambamba_cmd view -t "${num_threads}" -c "${work_dir}/${final_name}")
     echo "New bam has $new_sum reads"
 
     (
 	old_sum=""
 	for i in "${target_bam[@]}"; do
-	    tmp_sum=$(set -x; $sambamba_cmd view -t 8 -c "${i}")
+	    tmp_sum=$(set -x; $sambamba_cmd view -t "${num_threads}" -c "${i}")
 	    echo "$i has $tmp_sum reads"
 	    old_sum=$((tmp_sum + old_sum))
 	    echo "Running sum of old reads is $old_sum"

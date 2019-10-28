@@ -68,11 +68,11 @@ class Merge(bunnies.Transform):
         # adjust resources based on inputs and job parameters
         return {
             'vcpus': 2,
-            'memory': 4000,
+            'memory': 8000,
             'timeout': 1*3600
         }
 
-    def run(self, **params):
+    def run(self, resources=None, **params):
         """ this runs in the image """
         import os
         import os.path
@@ -100,12 +100,16 @@ class Merge(bunnies.Transform):
             all_srcs.append({"bam": bam_src, "bai": bai_src})
             all_dests += [bam_dest, bai_dest]
 
+        num_threads = resources['vcpus']
+        memory_mb = resources['memory']
         merge_args = [
             os.path.join(params["scriptdir"], "scripts", "lane_merger.sh"),
             "--samtools", "/usr/bin/samtools",
             "--sambamba", "/usr/local/bin/sambamba_v0.6.6",
             "--samplename", self.sample_name,
             "--tmpdir",   workdir,
+            "--threads", str(num_threads),
+            "--maxheap", str(memory_mb - 200),
             "--delete-old",
             os.path.join(local_output_dir, self.sample_name) + ".bam",  # output.bam
         ] + all_dests
