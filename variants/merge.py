@@ -65,11 +65,27 @@ class Merge(bunnies.Transform):
         }
 
     def task_resources(self, **kwargs):
-        # adjust resources based on inputs and job parameters
+        if self.params['num_bams'] <= 1:
+            # trivial merge -- only rewrites headers (if necessary)
+            return {
+                'vcpus': 2,
+                'memory': 4000,
+                'timeout': 1*3600
+            }
+
+        # combine all bams + make headers + mark dups + sort
+        input_size = 0
+        for inputi, inputval in self.inputs.items():
+            aligned_target = inputval.ls()
+            bam_url, bam_size = aligned_target['bam']['url'], aligned_target['bam']['size']
+            input_size += bam_size
+
+        gbs = float(input_size) / (1024*1024*1024)
+
         return {
-            'vcpus': 2,
-            'memory': 8000,
-            'timeout': 1*3600
+            'vcpus': 4,
+            'memory': 4000 * self.params['num_bams'],
+            'timeout': max(int(gbs*15*60), 3600) # 15m per gb (min 1h)
         }
 
     def run(self, resources=None, **params):
