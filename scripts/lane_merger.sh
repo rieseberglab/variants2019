@@ -240,7 +240,8 @@ function markdup ()
 if [[ "${#target_bam[@]}" -gt 1 ]]; then
     (
 	set -x
-	${sambamba_cmd} merge   -t "${num_threads}" "${work_dir}/__merged__.bam" "${target_bam[@]}"
+	ls -lh -- "${target_bam[@]}" || :
+	${sambamba_cmd} merge -t "${num_threads}" "${work_dir}/__merged__.bam" "${target_bam[@]}"
 	markdup "${work_dir}/__merged__.bam" "${work_dir}/${final_name}" "${work_dir}"
 	cat "${work_dir}/${final_name}".md5
 	update_read_groups "${TARGET_SAMPLE}" "${work_dir}/${final_name}"
@@ -307,6 +308,11 @@ else
 	    elif [[ -e "${final_file}" ]]; then
 		cp --preserve=timestamps -- "${final_file}" "${new_bam_dir}/"
 	    fi
+	done
+
+	: show output files
+	for final_file in "${work_dir}/${final_name}"{,.bai,.md5,stats.txt}; do
+	    ls -lh -- "${new_bam_dir}/$(basename "${final_file}")" || :
 	done
     )
 fi
