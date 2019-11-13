@@ -75,6 +75,8 @@ def main():
     parser.add_argument("source", metavar="SOURCE", type=str, default="-",
                         help="path to samplenames")
 
+    parser.add_argument("--species", metavar="SPECIES", type=str, default=None)
+
     args = parser.parse_args()
 
     infile = args.source
@@ -86,25 +88,44 @@ def main():
     sources = sources_db()
     outfd = sys.stdout
 
-    for line in infd:
+    invalid_names = []
+    seen_names = {}
+    for lineno, line in enumerate(infd):
         line = line.strip()
         if not line or line.startswith("#"): continue
         toks = line.split()
         samplename = toks[0]
         rest = toks[1:]
+
+        if samplename in seen_names:
+            sys.stderr.write("duplicate sample name %s found on line %s\n" % (samplename, lineno+1))
+            continue
+
+        seen_names[samplename] = lineno + 1
+
         # output sample_name:SAMPLENAME species:SPECIES run:RUN_ID url:URL md5:DIGEST
-        runs = sources[samplename]
+        try:
+            runs = sources[samplename]
+        except KeyError:
+            sys.stderr.write("name %s on line %s not found in sequence listing\n" % (samplename, lineno+1))
+            invalid_names.append(samplename)
+            continue
+
         for runid, run in runs.items():
             entry = {
                 'sample_name': samplename,
-                'species': rest[0],
+                'species': rest[0] if args.species is None else args.species,
                 'runid': runid,
                 'r1': run['r1'],
                 'r2': run['r2']
             }
             outfd.write(json.dumps(entry, sort_keys=True)+"\n")
 
-if __name__ == "__main__":
-    main()
-    sys.exit(0)
+    if invalid_names:
+        sys.stderr.write("%d sample names could not be found: %s\n" % (len(invalid_names), invalid_names))
+        return min(1, len(invalid_names) % 256)
+    return 0
 
+
+if __name__ == "__main__":
+    sys.exit(main())
