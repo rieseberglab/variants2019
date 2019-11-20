@@ -55,7 +55,7 @@ class Merge(bunnies.Transform):
 
     @classmethod
     def task_template(cls, compute_env):
-        scratchdisk = compute_env.get_disk('scratch')
+        scratchdisk = compute_env.get_disk('scratch') or compute_env.get_disk('localscratch')
         if not scratchdisk:
             raise Exception("Merge tasks require a scratch disk")
 
