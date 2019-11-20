@@ -124,18 +124,18 @@ def main():
     # - fixates software versions and parameters
     # - creates graph of dependencies
     log.info("building pipeline...")
-    pipeline = bunnies.build_pipeline(all_merges)
+    pipeline = bunnies.build_pipeline(all_merges[0:55])
     log.info("pipeline built...")
 
-    #for build_node in pipeline.build_order():
-    #    print(build_node.data, build_node.data.output_prefix())
-    #return 0
+    # for build_node in pipeline.build_order():
+    #     print(build_node.data, build_node.data.output_prefix())
+    # return 0
 
     #
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(os.path.basename("variants3"))
+    pipeline.build(os.path.basename("variants4"))
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
