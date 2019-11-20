@@ -83,8 +83,8 @@ class Merge(bunnies.Transform):
         gbs = float(input_size) / (1024*1024*1024)
 
         return {
-            'vcpus': 4,
-            'memory': 4000 * self.params['num_bams'],
+            'vcpus': 8,
+            'memory': 8000 * self.params['num_bams'],
             'timeout': max(int(gbs*15*60), 3600) # 15m per gb (min 1h)
         }
 

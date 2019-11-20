@@ -69,8 +69,8 @@ class Align(bunnies.Transform):
         # adjust resources based on inputs and job parameters
         return {
             'vcpus': 8,
-            'memory': 30000,
-            'timeout': 20*3600
+            'memory': 32000,
+            'timeout': 24*3600
         }
 
     def output_prefix(self, bucket=None):
