@@ -84,7 +84,7 @@ class Merge(bunnies.Transform):
 
         return {
             'vcpus': 8,
-            'memory': 8000 * self.params['num_bams'],
+            'memory': max(int(12000 * self.params['num_bams']), 62*1024),
             'timeout': max(int(gbs*15*60), 3600) # 15m per gb (min 1h)
         }
 
