@@ -68,8 +68,8 @@ class Align(bunnies.Transform):
     def task_resources(self, **kwargs):
         # adjust resources based on inputs and job parameters
         return {
-            'vcpus': 8,
-            'memory': 32000,
+            'vcpus': 32,
+            'memory': 120000,
             'timeout': 24*3600
         }
 
