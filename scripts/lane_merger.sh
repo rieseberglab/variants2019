@@ -298,8 +298,8 @@ else
 	ln -sfT "$ABSBAI" "${work_dir}/${final_name}".bai
 
 	update_read_groups "${TARGET_SAMPLE}" "${work_dir}/${final_name}"
-	(cd "${work_dir}" && md5sum "${final_name}" > "${final_name}".md5; )
-	${samtools_cmd} stats -d "${work_dir}/${final_name}" > "${work_dir}/${final_name}stats.txt"
+	(cd "${work_dir}" && time md5sum "${final_name}" > "${final_name}".md5; )
+	time ${samtools_cmd} stats -d "${work_dir}/${final_name}" > "${work_dir}/${final_name}stats.txt"
 
 	for final_file in "${work_dir}/${final_name}"{,.bai,.md5,stats.txt}; do
 	    if [[ -f "${final_file}" || "${DELETE_OLD}" -eq 1 ]]; then
