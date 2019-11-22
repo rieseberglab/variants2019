@@ -82,10 +82,11 @@ class Merge(bunnies.Transform):
 
         gbs = float(input_size) / (1024*1024*1024)
 
+        log.info("merge %s has %5.3f gbs of input", self.params['sample_name'], gbs)
         return {
             'vcpus': 8,
             'memory': max(int(12000 * self.params['num_bams']), 62*1024),
-            'timeout': max(int(gbs*15*60), 3600) # 15m per gb (min 1h)
+            'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
         }
 
     def run(self, resources=None, **params):
@@ -140,7 +141,7 @@ class Merge(bunnies.Transform):
                     os.path.join(s3_output_prefix, self.sample_name + ".bam")
                 ]) + "\n")
 
-        bunnies.run_cmd(["find", local_output_dir], stdout=sys.stdout, stderr=sys.stderr, cwd=workdir)
+        bunnies.run_cmd(["ls", "-lh",  local_output_dir], stdout=sys.stdout, stderr=sys.stderr, cwd=workdir)
         pfx = self.sample_name
 
         def _check_output_file(fname, is_optional=False):
