@@ -68,6 +68,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
                         help="input samples file in json format")
+    parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
+    parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
+
     args = parser.parse_args()
 
     infile = args.samples
@@ -124,7 +127,13 @@ def main():
     # - fixates software versions and parameters
     # - creates graph of dependencies
     log.info("building pipeline...")
-    pipeline = bunnies.build_pipeline(all_merges[0:51])
+
+    def _clamp(i, minval, maxval):
+        return min(max(minval, i), maxval)
+    start_index = _clamp(args.starti, 0, len(all_merges) - 1)
+    end_index = _clamp(args.endi, 0, len(all_merges) - 1)
+    pipeline = bunnies.build_pipeline(all_merges[start_index:end_index+1])
+
     log.info("pipeline built...")
 
     # for build_node in pipeline.build_order():
@@ -148,20 +157,6 @@ def main():
         merged = target.data
         refname = _shortname_of(merged.get_reference())
         print("\t".join([refname, merged.sample_name, merged.output_prefix()]))
-
-def dostuff():
-    # merge them by key
-    merged_bam1 = Merge("ANN0830", [bam for bam in all_bams if bam.sample_name == "ANN0830"])
-    merged_bam2 = Merge("ANN0832", [bam for bam in all_bams if bam.sample_name == "ANN0832"])
-
-    all_merged = [merged_bam1, merged_bam2]
-
-    pipeline = bunnies.build_pipeline(all_merged)
-
-    # TODO - a URL where we can see details and progress in the browser (maybe via lambda+apigateway)
-    # print(pipeline.dashboard_url())
-
-
 
 if __name__ == "__main__":
     main()
