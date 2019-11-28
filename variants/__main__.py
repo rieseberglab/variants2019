@@ -68,6 +68,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
                         help="input samples file in json format")
+    parser.add_argument("--computeenv", metavar="ENVNAME", type=str, default="variants4",
+                        help="assign this name to the compute environment resources")
     parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
     parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
 
@@ -144,7 +146,7 @@ def main():
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(os.path.basename("variants4"))
+    pipeline.build(args.computeenv)
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
