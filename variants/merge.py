@@ -65,15 +65,6 @@ class Merge(bunnies.Transform):
         }
 
     def task_resources(self, **kwargs):
-        if self.params['num_bams'] <= 1:
-            # trivial merge -- only rewrites headers (if necessary)
-            return {
-                'vcpus': 2,
-                'memory': 4000,
-                'timeout': 1*3600
-            }
-
-        # combine all bams + make headers + mark dups + sort
         input_size = 0
         for inputi, inputval in self.inputs.items():
             aligned_target = inputval.ls()
@@ -83,6 +74,16 @@ class Merge(bunnies.Transform):
         gbs = float(input_size) / (1024*1024*1024)
 
         log.info("merge %s has %5.3f gbs of input", self.params['sample_name'], gbs)
+
+        if self.params['num_bams'] <= 1:
+            # trivial merge -- only rewrites headers (if necessary) and compute md5
+            return {
+                'vcpus': 2,
+                'memory': 4000,
+                'timeout': max(int(gbs*(5*60)), 3600) # 5 min per gb (min 1h)
+            }
+
+        # combine all bams + make headers + mark dups + sort
         return {
             'vcpus': 8,
             'memory': max(int(12000 * self.params['num_bams']), 62*1024),
