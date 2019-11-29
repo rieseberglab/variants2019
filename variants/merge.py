@@ -86,7 +86,7 @@ class Merge(bunnies.Transform):
         # combine all bams + make headers + mark dups + sort
         return {
             'vcpus': 8,
-            'memory': max(int(12000 * self.params['num_bams']), 62*1024),
+            'memory': max(int(16000 * self.params['num_bams']), 62*1024),
             'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
         }
 
