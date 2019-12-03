@@ -64,7 +64,7 @@ class Merge(bunnies.Transform):
             'image': cls.MERGE_IMAGE
         }
 
-    def task_resources(self, **kwargs):
+    def task_resources(self, attempt=1, **kwargs):
         input_size = 0
         for inputi, inputval in self.inputs.items():
             aligned_target = inputval.ls()
@@ -84,9 +84,10 @@ class Merge(bunnies.Transform):
             }
 
         # combine all bams + make headers + mark dups + sort
+        # give an extra 20GB memory for each successive attempt
         return {
             'vcpus': 8,
-            'memory': max(int(16000 * self.params['num_bams']), 62*1024),
+            'memory': min(int(16000 * self.params['num_bams']), 62*1024) + (20*1024*(attempt - 1)),
             'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
         }
 
