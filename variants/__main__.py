@@ -70,6 +70,9 @@ def main():
                         help="input samples file in json format")
     parser.add_argument("--computeenv", metavar="ENVNAME", type=str, default="variants4",
                         help="assign this name to the compute environment resources")
+    parser.add_argument("--maxattempts", metavar="N", type=int, default=2,
+                        dest="max_attempts",
+                        help="maximum number of times job is submitted before considering it failed (min 1)")
     parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
     parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
 
@@ -138,15 +141,11 @@ def main():
 
     log.info("pipeline built...")
 
-    # for build_node in pipeline.build_order():
-    #     print(build_node.data, build_node.data.output_prefix())
-    # return 0
-
     #
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(args.computeenv)
+    pipeline.build(args.computeenv, max_attempts=args.max_attempts)
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
