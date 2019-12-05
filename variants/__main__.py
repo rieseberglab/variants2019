@@ -68,16 +68,22 @@ def main():
     supported_references = ("xrqv2", "psc8", "ha412")
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
-                        help="input samples file in json format")
-    parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
-                        dest="references", action="append", default=[],
-                        help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
+
+    # bunnies argumens
     parser.add_argument("--computeenv", metavar="ENVNAME", type=str, default="variants4",
                         help="assign this name to the compute environment resources")
     parser.add_argument("--maxattempts", metavar="N", type=int, default=2,
                         dest="max_attempts",
                         help="maximum number of times job is submitted before considering it failed (min 1)")
+    parser.add_argument("--maxvcpus", metavar="VCPUS", type=int, default=1024,
+                        dest="max_vcpus", help="the compute environment will scale to this upper limit for the number of VCPUs across all instances")
+
+    # variant calling arguments
+    parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
+                        help="input samples file in json format")
+    parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
+                        dest="references", action="append", default=[],
+                        help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
     parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
     parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
 
@@ -156,7 +162,7 @@ def main():
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(args.computeenv, max_attempts=args.max_attempts)
+    pipeline.build(args.computeenv, max_attempts=args.max_attempts, max_vcpus=args.max_vcpus)
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
