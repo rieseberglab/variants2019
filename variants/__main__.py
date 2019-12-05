@@ -65,9 +65,14 @@ def main():
     setup_logging(logging.INFO)
     bunnies.setup_logging(logging.INFO)
 
+    supported_references = ("xrqv2", "psc8", "ha412")
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
                         help="input samples file in json format")
+    parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
+                        dest="references", action="append", default=[],
+                        help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
     parser.add_argument("--computeenv", metavar="ENVNAME", type=str, default="variants4",
                         help="assign this name to the compute environment resources")
     parser.add_argument("--maxattempts", metavar="N", type=int, default=2,
@@ -83,6 +88,10 @@ def main():
         infd = sys.stdin
     else:
         infd = open(args.samples, "r")
+
+    args.references = set(args.references)
+    if not args.references:
+        args.references = set(supported_references)
 
     runs = []
     Run = namedtuple("Run", ["sample_name", "r1", "r2", "species", "runid"])
@@ -107,8 +116,10 @@ def main():
     targets = []
     references = {
         name: get_reference(name)
-        for name in ("xrqv2", "psc8", "ha412")
+        for name in args.references
     }
+
+    log.info("running on selected references: %s", sorted([name for name in args.references]))
 
     all_merges = []
     all_bams = []
@@ -154,10 +165,17 @@ def main():
         else:
             raise Exception("cannot find reference name for %s" % (str(s3_ref),))
 
+    all_outputs = {}
     for target in pipeline.targets:
         merged = target.data
         refname = _shortname_of(merged.get_reference())
-        print("\t".join([refname, merged.sample_name, merged.output_prefix()]))
+        all_outputs.setdefault(merged.sample_name, {})[refname] = merged.output_prefix()
+
+    print("\t".join(["SAMPLENAME", "REFERENCE", "BAMURL"]))
+    for sample_name in sorted(all_outputs.keys()):
+        per_reference = all_outputs[sample_name]
+        for refname in sorted(per_reference.keys()):
+            print("\t".join([sample_name, refname, per_reference[refname]]))
 
 if __name__ == "__main__":
     main()
