@@ -65,13 +65,26 @@ class Align(bunnies.Transform):
             'image': cls.ALIGN_IMAGE
         }
 
-    def task_resources(self, **kwargs):
+    def task_resources(self, attempt=1, **kwargs):
         # adjust resources based on inputs and job parameters
-        return {
-            'vcpus': 32,
-            'memory': 120000,
-            'timeout': 24*3600
-        }
+        if attempt == 1:
+            return {
+                'vcpus': 32,
+                'memory': 120000,
+                'timeout': 24*3600 * attempt
+            }
+        elif attempt == 2:
+            return {
+                'vcpus': 40,
+                'memory': 160000,
+                'timeout': 24*3600 * attempt
+            }
+        else:
+            return {
+                'vcpus': 64,
+                'memory': 250000,
+                'timeout': 24*3600 * attempt
+            }
 
     def output_prefix(self, bucket=None):
         bucket = bucket or config['storage']['build_bucket']
