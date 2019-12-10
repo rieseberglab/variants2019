@@ -88,6 +88,7 @@ def main():
                         help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
     parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
     parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
+    parser.add_argument("--dry-run", dest="dryrun", action="store_true", default=False, help="don't build. just print the jobs that are ready.")
 
     args = parser.parse_args()
 
@@ -164,10 +165,13 @@ def main():
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(args.computeenv,
-                   min_attempt=args.min_attempt,
-                   max_attempt=args.max_attempt,
-                   max_vcpus=args.max_vcpus)
+    if not args.dryrun:
+        pipeline.build(args.computeenv,
+                       min_attempt=args.min_attempt,
+                       max_attempt=args.max_attempt,
+                       max_vcpus=args.max_vcpus)
+    else:
+        log.info("dry run mode, skipping build.")
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
@@ -180,13 +184,29 @@ def main():
     for target in pipeline.targets:
         merged = target.data
         refname = _shortname_of(merged.get_reference())
-        all_outputs.setdefault(merged.sample_name, {})[refname] = merged.output_prefix()
+        all_outputs.setdefault(merged.sample_name, {})[refname] = merged
 
-    print("\t".join(["SAMPLENAME", "REFERENCE", "BAMURL"]))
+    headers = ["SAMPLENAME", "REFERENCE", "BAMURL"]
+    if args.dryrun:
+        headers.append("COMPLETE")
+
+    print("\t".join(headers))
     for sample_name in sorted(all_outputs.keys()):
         per_reference = all_outputs[sample_name]
         for refname in sorted(per_reference.keys()):
-            print("\t".join([sample_name, refname, per_reference[refname]]))
+            merged = per_reference[refname]
+            bam_url = merged.exists()
+            if not bam_url:
+                completed = False
+                bam_url = merged.output_prefix()
+            else:
+                completed = True
+
+            columns = [sample_name, refname, bam_url]
+            if args.dryrun:
+                columns.append("true" if completed else "false")
+
+            print("\t".join(columns))
 
 if __name__ == "__main__":
     main()
