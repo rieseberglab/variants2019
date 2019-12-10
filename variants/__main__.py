@@ -72,9 +72,11 @@ def main():
     # bunnies argumens
     parser.add_argument("--computeenv", metavar="ENVNAME", type=str, default="variants4",
                         help="assign this name to the compute environment resources")
-    parser.add_argument("--maxattempts", metavar="N", type=int, default=2,
-                        dest="max_attempts",
+    parser.add_argument("--maxattempt", metavar="N", type=int, default=2,
+                        dest="max_attempt",
                         help="maximum number of times job is submitted before considering it failed (min 1)")
+    parser.add_argument("--minattempt", metavar="M", type=int, default=1,
+                        dest="min_attempt")
     parser.add_argument("--maxvcpus", metavar="VCPUS", type=int, default=1024,
                         dest="max_vcpus", help="the compute environment will scale to this upper limit for the number of VCPUs across all instances")
 
@@ -162,7 +164,10 @@ def main():
     # Create compute resources, tag the compute environment
     # entities with the name of the package
     #
-    pipeline.build(args.computeenv, max_attempts=args.max_attempts, max_vcpus=args.max_vcpus)
+    pipeline.build(args.computeenv,
+                   min_attempt=args.min_attempt,
+                   max_attempt=args.max_attempt,
+                   max_vcpus=args.max_vcpus)
 
     def _shortname_of(s3_ref):
         for shortname, known_ref in references.items():
