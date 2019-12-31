@@ -83,6 +83,8 @@ def main():
     # variant calling arguments
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
                         help="input samples file in json format")
+    parser.add_argument("--stage", metavar="STAGE", type=str, default="gvcf",
+                        choices=["bam", "gvcf"])
     parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
                         dest="references", action="append", default=[],
                         help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
@@ -147,10 +149,12 @@ def main():
             by_name.setdefault(run.sample_name, []).append(bam)
         for sample_name in by_name:
             sample_bams = by_name[sample_name]
+
             # merge all the runs of that sample name in a single bam
             merged = Merge(sample_name, sample_bams)
             all_merges.append(merged)
 
+            # call haplotypecaller
             gvcf = Genotype(sample_name, merged, hc_options=[
                 "-G", "StandardAnnotation",
                 "-G", "AS_StandardAnnotation",
@@ -167,7 +171,12 @@ def main():
     start_index = _clamp(args.starti, 0, len(all_gvcfs) - 1)
     end_index = _clamp(args.endi, 0, len(all_gvcfs) - 1)
 
-    pipeline = bunnies.build_pipeline(all_merges[start_index:end_index+1])
+    if args.stage == "gvcf":
+        pipeline = bunnies.build_pipeline(all_gvcfs[start_index:end_index+1])
+    elif args.stage == "bam":
+        pipeline = bunnies.build_pipeline(all_merges[start_index:end_index+1])
+    else:
+        raise ValueError("unrecognized --stage value: %s" % (args.stage,))
 
     log.info("pipeline built...")
 
