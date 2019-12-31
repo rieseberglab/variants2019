@@ -11,7 +11,7 @@ class Genotype(bunnies.Transform):
     """
     Call HaplotypeCaller on the input.
     """
-    GENOTYPE_IMAGE = "rieseberglab/analytics:9-2.6.0"
+    GENOTYPE_IMAGE = "rieseberglab/analytics:9-3.0.0"
     VERSION = "1"
 
     __slots__ = ("sample_name", "sample_bam", "ref", "ref_idx")
