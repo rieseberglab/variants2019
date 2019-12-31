@@ -6,7 +6,7 @@ import logging
 
 from .align import Align
 from .merge import Merge
-
+from .genotype import Genotype
 
 log = logging.getLogger(__package__)
 

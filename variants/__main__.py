@@ -17,7 +17,7 @@ import json
 from collections import namedtuple
 
 # experiment specific
-from . import InputFile, Align, Merge, setup_logging
+from . import InputFile, Align, Merge, Genotype, setup_logging
 
 log = logging.getLogger(__package__)
 
@@ -132,6 +132,8 @@ def main():
 
     all_merges = []
     all_bams = []
+    all_gvcfs = []
+
     for refname, ref in references.items():
         by_name = {}
         for run in runs:
@@ -149,14 +151,22 @@ def main():
             merged = Merge(sample_name, sample_bams)
             all_merges.append(merged)
 
+            gvcf = Genotype(sample_name, merged, hc_options=[
+                "-G", "StandardAnnotation",
+                "-G", "AS_StandardAnnotation",
+                "-G", "StandardHCAnnotation"
+            ])
+            all_gvcfs.append(gvcf)
+
     # - fixates software versions and parameters
     # - creates graph of dependencies
     log.info("building pipeline...")
 
     def _clamp(i, minval, maxval):
         return min(max(minval, i), maxval)
-    start_index = _clamp(args.starti, 0, len(all_merges) - 1)
-    end_index = _clamp(args.endi, 0, len(all_merges) - 1)
+    start_index = _clamp(args.starti, 0, len(all_gvcfs) - 1)
+    end_index = _clamp(args.endi, 0, len(all_gvcfs) - 1)
+
     pipeline = bunnies.build_pipeline(all_merges[start_index:end_index+1])
 
     log.info("pipeline built...")
@@ -182,11 +192,11 @@ def main():
 
     all_outputs = {}
     for target in pipeline.targets:
-        merged = target.data
-        refname = _shortname_of(merged.get_reference())
-        all_outputs.setdefault(merged.sample_name, {})[refname] = merged
+        transformed = target.data
+        refname = _shortname_of(transformed.ref)
+        all_outputs.setdefault(transformed.sample_name, {})[refname] = transformed
 
-    headers = ["SAMPLENAME", "REFERENCE", "BAMURL"]
+    headers = ["SAMPLENAME", "REFERENCE", "OUTPUTURL"]
     if args.dryrun:
         headers.append("COMPLETE")
 
@@ -194,15 +204,15 @@ def main():
     for sample_name in sorted(all_outputs.keys()):
         per_reference = all_outputs[sample_name]
         for refname in sorted(per_reference.keys()):
-            merged = per_reference[refname]
-            bam_url = merged.exists()
-            if not bam_url:
+            transformed = per_reference[refname]
+            output_url = transformed.exists()
+            if not output_url:
                 completed = False
-                bam_url = merged.output_prefix()
+                output_url = transformed.output_prefix()
             else:
                 completed = True
 
-            columns = [sample_name, refname, bam_url]
+            columns = [sample_name, refname, output_url]
             if args.dryrun:
                 columns.append("true" if completed else "false")
 
