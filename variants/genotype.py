@@ -27,6 +27,9 @@ class Genotype(bunnies.Transform):
         merge_options=[ list of extra arguments to pass to gathergvcfs ]
         """
 
+        ref = None
+        ref_idx = None
+
         if manifest is not None:
             inputs, params = manifest['inputs'], manifest['params']
             sample_name = params.get('sample_name')
@@ -47,6 +50,11 @@ class Genotype(bunnies.Transform):
             raise ValueError("genotyping requires 1 aligned bam input")
         if not sample_name:
             raise ValueError("you must specify the sample name")
+
+        if not ref:
+            ref = sample_bam.ref
+        if not ref_idx:
+            ref_idx = sample_bam.ref_idx
 
         if not ref or not ref_idx:
             raise ValueError("genotyping requires reference and index")
