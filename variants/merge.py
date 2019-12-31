@@ -42,12 +42,35 @@ class Merge(bunnies.Transform):
         if not sample_name:
             raise ValueError("you must specify the sample name to write")
 
-        # fixme verify that all bams have the same reference
+        # verify that all bams have the same reference
+        ref = None
+        ref_idx = None
+
         for i, bam in enumerate(aligned_bams):
-            # print(self.sample_name, bam)
+
+            if ref is None:
+                ref = (i, bam.ref)
+            else:
+                if bam.ref != ref[1]:
+                    raise ValueError("input %d has a different reference than input %d" % (i, ref[0]))
+
+            if ref_idx is None:
+                ref_idx = (i, bam.ref_idx)
+            else:
+                if bam.ref_idx != ref_idx[1]:
+                    raise ValueError("input %d has a different reference index than input %d" % (i, ref_idx[0]))
+
             self.add_input(str(i), bam, desc="aligned input #%d" % (i,))
 
-    def get_reference(self):
+    @property
+    def ref(self):
+        if not self.inputs:
+            return None
+        bam0 = self.inputs["0"].node
+        return bam0.ref
+
+    @property
+    def ref_idx(self):
         if not self.inputs:
             return None
         bam0 = self.inputs["0"].node
