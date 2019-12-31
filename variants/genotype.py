@@ -84,7 +84,7 @@ class Genotype(bunnies.Transform):
         bam_target = self.sample_bam.ls()
 
         ref_size = ref_target['size']
-        bam_size = bam_target['size']
+        bam_size = bam_target['bam']['size']
         gbs = (ref_size + bam_size) / (1024 * 1024 * 1024)
 
         log.info("genotyping %s: %5.3f gbs of input data", self.params['sample_name'], gbs)
@@ -128,7 +128,7 @@ class Genotype(bunnies.Transform):
         bam_target = self.sample_bam.ls()
 
         log.info("genotyping BAM sample %s: bam=%s (size=%5.3fGiB)...",
-                 self.params, self.bam_target['url'], self.bam_target['size']/(1024*1024*1024))
+                 self.params, self.bam_target['bam']['url'], self.bam_target['size']/(1024*1024*1024))
 
         num_threads = resources['vcpus']
         memory_mb = resources['memory']
