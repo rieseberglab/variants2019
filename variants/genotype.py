@@ -7,6 +7,7 @@ from .constants import KIND_PREFIX, SAMPLE_NAME_RE
 
 log = logging.getLogger(__name__)
 
+
 class Genotype(bunnies.Transform):
     """
     Call HaplotypeCaller on the input.
@@ -89,11 +90,33 @@ class Genotype(bunnies.Transform):
 
         log.info("genotyping %s: %5.3f gbs of input data", self.params['sample_name'], gbs)
 
-        return {
-            'vcpus': 32,
-            'memory': (100 + 20*(attempt - 1)) * 1024,
-            'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
-        }
+        if attempt == 1:
+            return {
+                'vcpus': 28,
+                'memory': 156 * 1024,
+                'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
+            }
+        elif attempt == 2:
+            # less concurrency -- same memory
+            return {
+                'vcpus': 24,
+                'memory': 156 * 1024,
+                'timeout': max(int(gbs*(20*60)), 3600)
+            }
+        elif attempt == 3:
+            # conservative amount of threads -- way more memory
+            return {
+                'vcpus': 32,
+                'memory': 240 * 1024,
+                'timeout': max(int(gbs*(20*60)), 3600)
+            }
+        else:
+            # cpu waste -- but high available memory
+            return {
+                'vcpus': 20,
+                'memory': 240 * 1024,
+                'timeout': max(int(gbs*(20*60)), 3600)
+            }
 
     def run(self, resources=None, **params):
         """ this runs in the image """
@@ -110,9 +133,11 @@ class Genotype(bunnies.Transform):
 
         s3_output_prefix = self.output_prefix()
 
+        local_input_dir = os.path.join(workdir, "input")
         local_output_dir = os.path.join(workdir, "output")
 
         os.makedirs(local_output_dir, exist_ok=True)
+        os.makedirs(local_input_dir, exist_ok=True)
 
         cas_dir = "/localscratch/cas"
         os.makedirs(cas_dir, exist_ok=True)
@@ -128,21 +153,28 @@ class Genotype(bunnies.Transform):
         bam_target = self.sample_bam.ls()
 
         log.info("genotyping BAM sample %s: bam=%s (size=%5.3fGiB)...",
-                 self.params, self.bam_target['bam']['url'], self.bam_target['size']/(1024*1024*1024))
+                 self.params, bam_target['bam']['url'], bam_target['bam']['size']/(1024*1024*1024))
+
+        # download the bai too
+        bam_path = os.path.join(local_input_dir, os.path.basename(bam_target['bam']['url']))
+        bai_path = os.path.join(local_input_dir, os.path.basename(bam_target['bai']['url']))
+        bunnies.transfers.s3_download_file(bam_target['bam']['url'], bam_path)
+        bunnies.transfers.s3_download_file(bam_target['bai']['url'], bai_path)
 
         num_threads = resources['vcpus']
         memory_mb = resources['memory']
 
-        java_heap = "-Xmx%sm" % (memory_mb - 200)
+        mb_per_worker = (memory_mb - 200) // num_threads
+        java_heap = "-Xmx%dm" % (mb_per_worker,)
         vc_args = [
             "vc",
             "-o", s3_output_prefix,
-            "-i", bam_target['url'],
+            "-i", bam_path,
             "-w", workdir,
             "-r", ref_path,
-            "-n", num_threads,
+            "-n", str(num_threads),
             "-minbp", "0",
-            "-nsegments", num_threads*5,
+            "-nsegments", str(num_threads*5),
             "-bgzip",
             "-gatk4",
             "-javaoptions", java_heap
@@ -157,7 +189,6 @@ class Genotype(bunnies.Transform):
             try:
                 output_url = os.path.join(s3_output_prefix, fname)
                 meta = bunnies.get_blob_meta(output_url)
-                st_size = meta['ContentLength']
                 return {
                     "size": meta['ContentLength'],
                     "url": output_url,

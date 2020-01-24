@@ -52,6 +52,7 @@ class Merge(bunnies.Transform):
                 ref = (i, bam.ref)
             else:
                 if bam.ref != ref[1]:
+                    log.error("%s %s", bam.ref, repr(bam.ref))
                     raise ValueError("input %d has a different reference than input %d" % (i, ref[0]))
 
             if ref_idx is None:
@@ -74,7 +75,7 @@ class Merge(bunnies.Transform):
         if not self.inputs:
             return None
         bam0 = self.inputs["0"].node
-        return bam0.ref
+        return bam0.ref_idx
 
     @classmethod
     def task_template(cls, compute_env):
