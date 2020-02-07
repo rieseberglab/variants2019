@@ -84,6 +84,7 @@ def main():
     parser.add_argument("samples", metavar="SAMPLESJSON", type=str, default="-",
                         help="input samples file in json format")
     parser.add_argument("--stage", metavar="STAGE", type=str, default="gvcf",
+                        help="the stage of the pipeline to compute (bam, gvcf)",
                         choices=["bam", "gvcf"])
     parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
                         dest="references", action="append", default=[],
