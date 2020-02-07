@@ -90,32 +90,34 @@ class Genotype(bunnies.Transform):
 
         log.info("genotyping %s: %5.3f gbs of input data", self.params['sample_name'], gbs)
 
+        # FIXME -- if the failures are for timeouts, raise the time, not the
+        #          ram/cpu.
         if attempt == 1:
             return {
                 'vcpus': 28,
                 'memory': 156 * 1024,
-                'timeout': max(int(gbs*(20*60)), 3600) # 20m per gb (min 1h)
+                'timeout': max(int(gbs*(40*60)), 3600) # 30m per gb (min 1h)
             }
         elif attempt == 2:
             # less concurrency -- same memory
             return {
                 'vcpus': 24,
                 'memory': 156 * 1024,
-                'timeout': max(int(gbs*(20*60)), 3600)
+                'timeout': max(int(gbs*(40*60)), 3600)
             }
         elif attempt == 3:
             # conservative amount of threads -- way more memory
             return {
                 'vcpus': 32,
                 'memory': 240 * 1024,
-                'timeout': max(int(gbs*(20*60)), 3600)
+                'timeout': max(int(gbs*(40*60)), 3600)
             }
         else:
             # cpu waste -- but high available memory
             return {
                 'vcpus': 20,
                 'memory': 240 * 1024,
-                'timeout': max(int(gbs*(20*60)), 3600)
+                'timeout': max(int(gbs*(40*60)), 3600)
             }
 
     def run(self, resources=None, **params):
