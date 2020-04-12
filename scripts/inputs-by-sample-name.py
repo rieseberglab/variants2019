@@ -6,7 +6,7 @@ import json
 from collections import OrderedDict
 
 topdir = os.path.dirname(__file__) + "/.."
-sample_sources = os.path.join(topdir, "sample-info", "samples", "sequence_sources_oct_2019.tsv")
+sample_sources = os.path.join(topdir, "sample-info", "samples", "sequence_sources_apr_2020.tsv")
 
 
 def sources_db():
@@ -88,17 +88,25 @@ def main():
     sources = sources_db()
     outfd = sys.stdout
 
-    invalid_names = []
+    sample_errors = {}
     seen_names = {}
     for lineno, line in enumerate(infd):
         line = line.strip()
-        if not line or line.startswith("#"): continue
+        if not line or line.startswith("#"):
+            continue
         toks = line.split()
         samplename = toks[0]
         rest = toks[1:]
 
         if samplename in seen_names:
-            sys.stderr.write("duplicate sample name %s found on line %s\n" % (samplename, lineno+1))
+            sys.stderr.write("error on line %s: duplicate sample name %s\n" % (lineno+1, samplename))
+            sample_errors[samplename] = True
+            continue
+
+        if len(rest) < 1 and not args.species:
+            sys.stderr.write("error on line %s: sample %s doesn't specify a species and no default specified.\n" % (
+                lineno+1, samplename))
+            sample_errors[samplename] = True
             continue
 
         seen_names[samplename] = lineno + 1
@@ -107,8 +115,8 @@ def main():
         try:
             runs = sources[samplename]
         except KeyError:
-            sys.stderr.write("name %s on line %s not found in sequence listing\n" % (samplename, lineno+1))
-            invalid_names.append(samplename)
+            sys.stderr.write("error on line %s: name %s not found in sequence listing\n" % (lineno+1, samplename))
+            sample_errors[samplename] = True
             continue
 
         for runid, run in runs.items():
@@ -121,9 +129,11 @@ def main():
             }
             outfd.write(json.dumps(entry, sort_keys=True)+"\n")
 
-    if invalid_names:
-        sys.stderr.write("%d sample names could not be found: %s\n" % (len(invalid_names), invalid_names))
-        return min(1, len(invalid_names) % 256)
+    if sample_errors:
+        sys.stderr.write("%d samples generated errors.\n" % (len(sample_errors),))
+
+    if sample_errors:
+        return min(1, len(sample_errors) % 256)
     return 0
 
 
