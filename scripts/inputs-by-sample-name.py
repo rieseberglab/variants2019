@@ -3,16 +3,32 @@ import sys
 import argparse
 import os.path
 import json
+import re
 from collections import OrderedDict
 
 topdir = os.path.dirname(__file__) + "/.."
 sample_sources = os.path.join(topdir, "sample-info", "samples", "sequence_sources_apr_2020.tsv")
+species_info = os.path.join(topdir, "sample-info", "samples", "species_info_apr_2020.json")
+
+
+def species_db():
+    by_name = {}
+    with open(species_info, "r") as infd:
+        for lineno, line in enumerate(infd):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            record = json.loads(line)
+            by_name[record['sample_name']] = record
+    return by_name
 
 
 def sources_db():
     by_sample = OrderedDict()
 
     is_header = True
+    R1_patt = re.compile(".*_R1([.][a-z]+)?.f(ast)?q.gz$")
+    R2_patt = re.compile(".*_R2([.][a-z]+)?.f(ast)?q.gz$")
     with open(sample_sources, "r") as infd:
         for lineno, line in enumerate(infd):
             line = line.strip()
@@ -52,11 +68,11 @@ def sources_db():
                 runs[src_run] = item
 
             run = runs[src_run]
-            if src_url.endswith("_R1.fastq.gz"):
+            if R1_patt.match(src_url):
                 if run['r1']:
                     raise Exception("duplicate %s run %s R1" % (samplename, src_run))
                 run['r1'] = (src_url, digests)
-            elif src_url.endswith("_R2.fastq.gz"):
+            elif R2_patt.match(src_url):
                 if run['r2']:
                     raise Exception("duplicate %s run %s R2" % (samplename, src_run))
                 run['r2'] = (src_url, digests)
@@ -75,8 +91,6 @@ def main():
     parser.add_argument("source", metavar="SOURCE", type=str, default="-",
                         help="path to samplenames")
 
-    parser.add_argument("--species", metavar="SPECIES", type=str, default=None)
-
     args = parser.parse_args()
 
     infile = args.source
@@ -86,6 +100,7 @@ def main():
         infd = open(args.source, "r")
 
     sources = sources_db()
+    species = species_db()
     outfd = sys.stdout
 
     sample_errors = {}
@@ -103,12 +118,6 @@ def main():
             sample_errors[samplename] = True
             continue
 
-        if len(rest) < 1 and not args.species:
-            sys.stderr.write("error on line %s: sample %s doesn't specify a species and no default specified.\n" % (
-                lineno+1, samplename))
-            sample_errors[samplename] = True
-            continue
-
         seen_names[samplename] = lineno + 1
 
         # output sample_name:SAMPLENAME species:SPECIES run:RUN_ID url:URL md5:DIGEST
@@ -119,10 +128,13 @@ def main():
             sample_errors[samplename] = True
             continue
 
+        sample_meta = species.get(samplename, {})
+
         for runid, run in runs.items():
             entry = {
                 'sample_name': samplename,
-                'species': rest[0] if args.species is None else args.species,
+                'species': sample_meta.get('species', None),
+                'species_abbr': sample_meta.get('species_abbr', None),
                 'runid': runid,
                 'r1': run['r1'],
                 'r2': run['r2']
