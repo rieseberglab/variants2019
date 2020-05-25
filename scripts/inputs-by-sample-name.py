@@ -6,6 +6,18 @@ import json
 import re
 from collections import OrderedDict
 
+"""Preprocessing script for the variants main file.
+
+Convert a list of sample names (pathname provided as first argument)
+into an input manifest usable by the variants main script.
+
+the input is a tsv whose first column contains the name of a sample.
+
+the output (STDOUT), will have the URLs for the files to use, as well as
+some species information.
+
+"""
+
 topdir = os.path.dirname(__file__) + "/.."
 sample_sources = os.path.join(topdir, "sample-info", "samples", "sequence_sources_apr_2020.tsv")
 species_info = os.path.join(topdir, "sample-info", "samples", "species_info_apr_2020.json")
