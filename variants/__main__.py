@@ -88,10 +88,14 @@ def main():
                         choices=["bam", "gvcf"])
     parser.add_argument("--reference", metavar="REFNAME", choices=supported_references,
                         dest="references", action="append", default=[],
-                        help="specify name of reference to consider. default is to do all of %s" % (supported_references,))
-    parser.add_argument("--starti", metavar="STARTI", type=int, default=0, help="restrict pipeline to merges i>=starti (0based)")
-    parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999, help="restrict pipeline to merges i<=endi  (0based)")
-    parser.add_argument("--dry-run", dest="dryrun", action="store_true", default=False, help="don't build. just print the jobs that are ready.")
+                        help="specify name of reference to consider. default is to do all of %s" %
+                             (supported_references,))
+    parser.add_argument("--starti", metavar="STARTI", type=int, default=0,
+                        help="restrict pipeline to merges i>=starti (0based)")
+    parser.add_argument("--endi",   metavar="ENDI",   type=int, default=9999999999,
+                        help="restrict pipeline to merges i<=endi  (0based)")
+    parser.add_argument("--dry-run", dest="dryrun", action="store_true", default=False,
+                        help="don't build. just print the jobs that are ready.")
 
     args = parser.parse_args()
 
@@ -106,7 +110,7 @@ def main():
         args.references = set(supported_references)
 
     runs = []
-    Run = namedtuple("Run", ["sample_name", "r1", "r2", "species", "runid"])
+    Run = namedtuple("Run", ["sample_name", "r1", "r2", "runid"])
     for line in infd:
         line = line.strip()
         if not line or line.startswith("#"):
@@ -120,7 +124,6 @@ def main():
             sample_name=obj['sample_name'],
             r1=InputFile(obj['r1'][0], digests=r1_digests),
             r2=(InputFile(obj['r2'][0], digests=r2_digests) if r2 else None),
-            species=obj['species'],
             runid=obj['runid']
         ))
     log.info("processing %d sequencing runs...", len(runs))
