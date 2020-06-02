@@ -37,11 +37,10 @@ def get_reference(shortname):
         return get_reference.cache[shortname]
 
     if shortname in ("ha412",):
-        ref     = InputFile("s3://rieseberg-references/HA412/genome/Ha412HOv2.0-20181130.fasta",
+        ref     = InputFile("s3://ubc-sunflower-genome/references/HA412/genome/Ha412HOv2.0-20181130.fasta",
                             desc="Ha412HO genome reference (.fasta)")
-        ref_idx = InputFile("s3://rieseberg-references/HA412/genome/Ha412HOv2.0-20181130.fasta.fai",
+        ref_idx = InputFile("s3://ubc-sunflower-genome/references/HA412/genome/Ha412HOv2.0-20181130.fasta.fai",
                             desc="Ha412HO genome reference index")
-
     elif shortname in ("xrqv2",):
         ref = InputFile("s3://rieseberg-references/HanXRQ2.0-20180814/annotated/HanXRQr2.0-SUNRISE-2.1.genome.fasta",
                         desc="HanXRQv2 genome reference (.fasta)")
