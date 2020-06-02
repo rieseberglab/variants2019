@@ -86,11 +86,10 @@ class Align(bunnies.Transform):
                 'timeout': 24*3600 * attempt
             }
 
-    def output_prefix(self, bucket=None):
-        bucket = bucket or config['storage']['build_bucket']
-        return "s3://%(bucket)s/%(name)s.%(version)s-%(sample_name)s-%(cid)s/" % {
+    def output_prefix(self, write_url=None):
+        return "%(repo)s%(name)s.%(version)s-%(sample_name)s-%(cid)s/" % {
+            'repo': self.repo_path(write_url=write_url),
             'name': self.name,
-            'bucket': bucket,
             'version': self.version,
             'sample_name': self.params['sample_name'],
             'cid': self.canonical_id

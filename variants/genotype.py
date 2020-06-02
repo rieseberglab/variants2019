@@ -211,14 +211,13 @@ class Genotype(bunnies.Transform):
         }
         return output
 
-    def output_prefix(self, bucket=None):
-        bucket = bucket or config['storage']['build_bucket']
+    def output_prefix(self, write_url=None):
         is_allele_specific = "AS_StandardAnnotation" in self.params['hc_options']
 
-        return "s3://%(bucket)s/%(name)s.%(version)s-%(sample_name)s-AS%(allelespec)s-%(cid)s/" % {
+        return "%(repo)s%(name)s.%(version)s-%(sample_name)s-AS%(allelespec)s-%(cid)s/" % {
             'name': self.name,
             'allelespec': "1" if is_allele_specific else "0",
-            'bucket': bucket,
+            'repo': self.repo_path(write_url=write_url),
             'version': self.version,
             'sample_name': self.sample_name,
             'cid': self.canonical_id
